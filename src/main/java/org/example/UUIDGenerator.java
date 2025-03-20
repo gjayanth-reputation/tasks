@@ -12,34 +12,39 @@ import java.util.concurrent.Executors;
 
 public class UUIDGenerator {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         ExecutorService executorService = Executors.newFixedThreadPool(200);
         Map<String,Long> map = new ConcurrentHashMap<>();
-        File outputFile = new File("200_threads_1000000_concurrent_jobs.txt");
-        try(BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))){
-            for (long i = 0; i < 1000000L; i++) {
+        File outputFile = new File("200_threads_100000_concurrent_jobs.txt");
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+            for (long i = 0; i < 100000L; i++) {
                 executorService.submit(() -> {
-                    String uuid = UUID.randomUUID().toString().replace("-","");
-                    try {
-                        writer.write("Generated UUID: " + uuid);
-                        writer.newLine();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+                    String uuid = UUID.randomUUID().toString();
+                    synchronized (writer) {
+                        try {
+                            writer.write("Generated UUID: " + uuid);
+                            writer.newLine();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                     map.put(uuid,map.getOrDefault(uuid,0L)+1);
                 });
             }
+
+            executorService.shutdown();
+
+            while (!executorService.isTerminated()) {
+
+            }
+
+            map.entrySet()
+                    .stream()
+                    .filter(e->e.getValue()>1L)
+                    .forEach(System.out::println);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        executorService.shutdown();
-
-        map.entrySet()
-                .stream()
-                .filter(e->e.getValue()>1L)
-                .forEach(System.out::println);
-
     }
 }
