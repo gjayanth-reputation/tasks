@@ -13,11 +13,11 @@ import java.util.concurrent.Executors;
 public class UUIDGenerator {
 
     public static void main(String[] args) throws IOException {
-        ExecutorService executorService = Executors.newFixedThreadPool(20);
+        ExecutorService executorService = Executors.newFixedThreadPool(200);
         Map<String,Long> map = new ConcurrentHashMap<>();
-        File outputFile = new File("20_threads_100000_concurrent_jobs.txt");
-        for (long i = 0; i < 100000L; i++) {
-            try(BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))){
+        File outputFile = new File("200_threads_1000000_concurrent_jobs.txt");
+        try(BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))){
+            for (long i = 0; i < 1000000L; i++) {
                 executorService.submit(() -> {
                     String uuid = UUID.randomUUID().toString().replace("-","");
                     try {
@@ -28,10 +28,10 @@ public class UUIDGenerator {
                     }
                     map.put(uuid,map.getOrDefault(uuid,0L)+1);
                 });
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             }
-
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         executorService.shutdown();
